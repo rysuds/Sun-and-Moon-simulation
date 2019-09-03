@@ -5,7 +5,17 @@ from copy import deepcopy
 import random as rand
 import matplotlib.pyplot as plt
 
+#TODO: relate # of iterations till convergence to largest Eigenvalue of Laplacian
+#TODO: use NetworkX to plot directed edges and scow actal connections to neighbors
+#TODO: make command line runnable
+#TODO: write functions to customize placement, ie create a square configuration with specific partners etc
+
 class Player(Vector):
+    '''
+        This class defines all of the properties of the "player" or the node
+        in our dynamic graph. In this model, each player has two partners, with
+        some randomly generated distance (weighted edge) between them
+    '''
     def __init__(self,x=0.0, y=0.0):
         self.x, self.y = x,y
         self.partners = []
@@ -14,7 +24,7 @@ class Player(Vector):
         #Store key of partners
         self.partners.append(partner)
 
-    def update_position(self,player_dict,bound=None):
+    def update_position(self,player_dict,bound=None,step=None):
         #Bound Parameter fixes the max x,y coord value to a specified value
         p1i,p2i = self.partners
         p1,p2 = player_dict[p1i], player_dict[p2i]
@@ -31,41 +41,35 @@ class Player(Vector):
         CP = self - closest
         ProjCPCM = CP.proj(CM)
         movement_vector = CM - ProjCPCM
-        new_self = self + movement_vector
-        if bound:
-            sign = lambda a: (a>0) - (a<0)
-            #lower, upper = -bound, bound
-            #pairx = (self.x,new_self.x)
-            #pairy = (self.y,new_self.y)
+        if step: #limit movement to step defined by simulation
+            scaled = movement_vector.unitVector().scale(step)
+            new_self = self + scaled
+        else:
+            new_self = self + movement_vector
 
-            #if abs(new_self.x)>=bound:
-            #    self.x = sign(new_self.x)*bound
-            #if abs(new_self.y)>=bound:
-            #    self.y = sign(new_self.y)*bound
-
-            #Upper Positive bound check
+        if bound: #limit upper bound
             self.x, self.y = min(new_self.x,bound),min(new_self.y,bound)
-
-            #for pair in (pairx,pairy):
-            #    s,n = pair
-            #    if n <=lower:
-            #        s = lower
-            #    elif n >= upper:
-            #        s = upper
-            #    else:
-            #        pass
-            #self.x, self.y = new_self.x, new_self.y
         else:
             self.x, self.y = new_self.x, new_self.y
 
 class Simulation():
+    '''
+        This class creates the simualtion in which the players' positions
+        evolve with respect to each other
+    '''
     def __init__(self,N=5,num_players=5,seed=20,players={}):
         self.N = N
         self.num_players = num_players
         self.players = players
+        self.adjacency = {}
+        self.step = N*0.1 #movement increment of player
         self.history = [] #list of list of coords, corresponds to timesteps
         self.centers = [] #center at every step
         rand.seed(seed)
+
+        #initialize all players/partners
+        self.generate_players()
+        self.add_all_partners()
 
     def get_iterations(self):
         return len(self.history)
@@ -76,17 +80,15 @@ class Simulation():
             self.players = {}
 
         for i in range(self.num_players):
-            #modularize this to customize player placement
+            #modularize this to customize player placement, currently only supports random placement
             x_coord, y_coord = round(rand.uniform(-N,N),2), round(rand.uniform(-N,N),2)
             self.players[i] = Player(x=x_coord,y=y_coord)
-        print(self.players)
 
     def add_all_partners(self):
         if len(self.players) < self.num_players:
             self.generate_players()
         #print(self.players)
         for key,player in self.players.items():
-            #tmp = deepcopy(self.players)
             #prevent self selection
             keys = list(self.players.keys())
             keys.remove(key)
@@ -100,7 +102,7 @@ class Simulation():
             p2 = rand.choice(keys)
             #player.add_partner(self.players[p2])
             player.add_partner(p2)
-
+            self.adjacency[key] = player.partners
 
     def get_tups(self,array=True):
         tups = []
@@ -139,6 +141,7 @@ class Simulation():
             distances.append(np.sqrt(tup[0]**2 + tup[1]**2))
         return sum(distances)/len(distances)
 
+
     def run_sim(self,lim = 0.01,plot=False):
         #create players and their partners
         self.generate_players()
@@ -150,8 +153,6 @@ class Simulation():
         self.centers.append(self.get_center())
         #iter = 0
         while convergence > lim:
-            #iter+=1
-            #print(iter)
             old = new
             for key,player in self.players.items():
                 player.update_position(player_dict = self.players, bound=self.N)
@@ -167,14 +168,11 @@ class Simulation():
             self.plotter()
 
     def run_live_plot(self,lim = 0.1):
-        #create players and their partners
+        #Plots the graphs step by step, rather than from a list of snapshots
         self.generate_players()
         self.add_all_partners()
         old, new = np.zeros((self.num_players,2)), self.get_tups()
         convergence = self.get_step_diffs(old,new)
-
-        #self.history.append(self.get_tups(array=False))
-        #iter = 0
 
         fig, ax = plt.subplots()
         x_0, y_0 = zip(*self.get_tups(array=False))
@@ -206,44 +204,16 @@ class Simulation():
 
 
 def main():
-    #can loop through random seeds to get different data points
-    #TODO for a given seed, plot iter vs num_players
-    # see if center of mass is a useful variable
-    #TODO plot actual network of graph! edges correspond to neighbor, use arrows
-    #for DAG, change color if both directions
-
     #Divergent Examples
     ## Seed = 2, Num_players = 16, Gridsize = 10
     ####"FIXED" this by adding a 'bound' parameter to update_position,
     #### this prevents any player from exceeding the bounds by selecting the
     #### minimum of a calculated value and the bound N
 
-    '''
-    range_players = range(3,300)
-    seed = 2
-    grid = 100
-    num_players, num_iter, avg_center = [],[],[]
-    for n in range_players:
-        sim = Simulation(N=grid,num_players=n,seed = seed)
-        sim.run_sim(plot=False)
-        print(f'Num Players: {n} | Num Iterations: {len(sim.history)}')
-        num_players.append(n)
-        num_iter.append(len(sim.history))
-
-    plt.figure()
-    plt.title(f'Seed: {seed}')
-    plt.xlabel('# Players')
-    plt.ylabel('Iteration')
-    #plt.xticks(rotation=45, ha='right')
-    plt.plot(num_players,num_iter, color = 'b')
-#plt.legend()
-    plt.show()
-    '''
-
-
     #Testing specific cases
-    sim = Simulation(N=10,num_players=6,seed = 2)
+    sim = Simulation(N=10,num_players=8,seed=22)
     #sim.run_sim(plot=True)
+    print(sim.adjacency)
     sim.run_live_plot()
 
 
