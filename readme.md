@@ -12,7 +12,7 @@ I think "chaos ensues" is a very apt way of describing the game because it is es
 
 ## The Model
 
-We randomluy generate a set of x,y coordinates (players) and assign each player two random "partners" from the set. At every step of the simulation the player makes a move to get equidistant with both partners (this is calculated using some vector algebra). The simulation converges when the this happens when the average difference of every point with its previous coordinate is less than a specified threshold.
+We randomly generate a set of x,y coordinates (players) and assign each player two random "partners" from the set. At every step of the simulation the player makes a move to get equidistant with both partners (this is calculated using some vector algebra). The simulation converges when the this happens when the average difference of every point with its previous coordinate is less than a specified threshold.
 
 ## Further Work
 
