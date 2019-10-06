@@ -1,9 +1,8 @@
 import math
 import numpy as np
-from vec import Vector
-from copy import deepcopy
 import random as rand
 import matplotlib.pyplot as plt
+from Vector import Vector
 
 #TODO: relate # of iterations till convergence to largest Eigenvalue of Laplacian
 #TODO: use NetworkX to plot directed edges and scow actal connections to neighbors
@@ -26,7 +25,7 @@ class Player(Vector):
 
     def update_position(self,player_dict,bound=None,step=None):
         #Bound Parameter fixes the max x,y coord value to a specified value
-        p1i,p2i = self.partners
+        p1i,p2i = self.partners[0], self.partners[1]
         p1,p2 = player_dict[p1i], player_dict[p2i]
 
         midpoint_vector = p1.mid(p2)
@@ -203,18 +202,3 @@ class Simulation():
         plt.close()
 
 
-def main():
-    #Divergent Examples
-    ## Seed = 2, Num_players = 16, Gridsize = 10
-    ####"FIXED" this by adding a 'bound' parameter to update_position,
-    #### this prevents any player from exceeding the bounds by selecting the
-    #### minimum of a calculated value and the bound N
-
-    #Testing specific cases
-    sim = Simulation(N=10,num_players=8,seed=22)
-    #sim.run_sim(plot=True)
-    print(sim.adjacency)
-    sim.run_live_plot()
-
-
-main()
