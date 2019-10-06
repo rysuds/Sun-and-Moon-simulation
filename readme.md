@@ -14,6 +14,13 @@ I think "chaos ensues" is a very apt way of describing the game because it is es
 
 We randomly generate a set of x,y coordinates (players) and assign each player two random "partners" from the set. At every step of the simulation the player makes a move to get equidistant with both partners (this is calculated using some vector algebra). The simulation converges when the this happens when the average difference of every point with its previous coordinate is less than a specified threshold.
 
+## How to run
+
+The simulation can be run using this command, specifying the gridsize ```N```, number of players ```P```, and seed ```S```
+```
+~$ python run_simulation.py -N 10 -P 8 -S 22
+```
+
 ## Further Work
 
 Some of these configurations do not converge, and there is a lot of various of the convergence time of those that do. It would be interesting to see if we could relate the convergence time to some sort of scalar descriptor of these systems (effectively weighted,directed graphs). One candidate is the largest eigenvalue of the Laplacian. I hope to get around to this soon
