@@ -1,7 +1,3 @@
-import math
-import numpy as np
-import random as rand
-import matplotlib.pyplot as plt
 from Vector import Vector
 
 #TODO: relate # of iterations till convergence to largest Eigenvalue of Laplacian
