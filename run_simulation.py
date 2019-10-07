@@ -1,5 +1,5 @@
 import argparse
-from Player import Simulation
+from Simulation import Simulation
 
 def main():
     #Divergent Examples
